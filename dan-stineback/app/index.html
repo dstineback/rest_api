@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Client side </title>
+  </head>
+  <body ng-app="CatDogApp">
+    <main>
+      <section ng-controller="CatsController as catsctrl">
+        <h1>{{catsctrl.catTitle}}</h1>
+        <ul>
+          <li ng-repeat="cat in catsctrl.cats">
+            <button ng-click="cat.editing = !cat.editing">Edit</button>
+            <form ng-hide="!cat.editing" ng-submit="catsctrl.updateCat(cat, updatedCat)">
+              <input type="text" ng-model="updatedCat"/>
+              <button type="submit">Updated</button>
+              <button ng-click="catsctrl.deletedCat(cat)">Delete</button>
+            </form>
+          </li>
+        </ul>
+        <form ng-submit="catsctrl.addCat()">
+          <input ng-model="catsctrl.newCat.body" type="text"/>
+          <button type="button">New Cat</button>
+        </form>
+      </section>
+      <section ng-controller="DogsController as dogsctrl">
+        <h1>{{dogsctrl.dogTitle}}</h1>
+        <ul>
+          <li ng-repeat="dog in dogsctrl.dogs">
+            <button ng-click="dog.editing = !dog.editing">Edit</button>
+            <form ng-hide="!dog.editing" ng-submit="dogsctrl.updatedog(dog, updateddog)">
+              <input type="text" ng-model="updateddog"/>
+              <button type="submit">add new dog</button>
+              <button ng-click="dogsctrl.deleteddog(dog)">Delete</button>
+            </form>
+        </ul>
+        <form ng-submit="dogsctrl.addDog()">
+          <input ng-model="dogsctrl.newDog.body" type="text"/>
+          <button type="button">New Dog</button>
+        </form>
+      </section>
+    </main>
+    <script src="./bundle.js"></script>
+  </body>
+</html>
