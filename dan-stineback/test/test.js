@@ -2,25 +2,26 @@
 
 const chai = require('chai');
 const chaiHTTP = require('chai-http');
-const Cat = require('../schema/cats');
-const Dog = require('../schema/dogs');
+const Cat = require('../model/cats');
+const Dog = require('../model/dogs');
+const basic = require('../lib/basic-http');
 
 const mongoose = require('mongoose');
 chai.use(chaiHTTP);
 
 const expect = chai.expect;
 const request = chai.request;
-const dbPort = process.env.MONGOLAB_URI;
+const dbPort = process.env.MONGODB_URI;
 
-process.env.MONGOLAB_URI = 'mongodb://localhost/test_db';
+process.env.MONGODB_URI = 'mongodb://localhost/test_db';
 require('../server');
 
 
 describe('Cat test', () => {
   after((done)=> {
-    process.env.MONGOLAB_URI = dbPort;
+    process.env.MONGODB_URI = dbPort;
     mongoose.connection.db.dropDatabase(()=>{
-        done();
+      done();
     });
   });
   it('should get a list of cats', (done) => {
@@ -42,7 +43,6 @@ describe('Cat test', () => {
         expect(res).to.have.status(200);
         expect(res.body.name).to.eql('Vic');
         expect(res.body).to.have.property('_id');
-        expect(res.body.size).to.eql('large');
         done();
       });
   });
@@ -69,24 +69,24 @@ describe('Cat test', () => {
           done();
         });
     });
-     it('should delete a cat', (done)=>{
-       request('localhost:3000')
+    it('should delete a cat', (done)=>{
+      request('localhost:3000')
         .delete('/cats/' + testCat._id)
         .end((err, res)=>{
           expect(err).to.eql(null);
           expect(res).to.have.status(200);
           expect(res.body.message).to.eql('successfully deleted');
           done();
-        })
-     })
+        });
+    });
   });
 });
 
 describe('Dog test', () => {
   after((done)=> {
-    process.env.MONGOLAB_URI = dbPort;
+    process.env.MONGODB_URI = dbPort;
     mongoose.connection.db.dropDatabase(()=>{
-        done();
+      done();
     });
   });
   it('should get a list of dogs', (done) => {
@@ -108,11 +108,9 @@ describe('Dog test', () => {
         expect(res).to.have.status(200);
         expect(res.body.name).to.eql('Vic');
         expect(res.body).to.have.property('_id');
-        expect(res.body.size).to.eql('large');
         done();
       });
   });
-
 
   describe('test that need data', ()=> {
     let testDog;
@@ -135,15 +133,58 @@ describe('Dog test', () => {
           done();
         });
     });
-     it('should delete a dog', (done)=>{
-       request('localhost:3000')
+    it('should delete a dog', (done)=>{
+      request('localhost:3000')
         .delete('/cats/' + testDog._id)
         .end((err, res)=>{
           expect(err).to.eql(null);
           expect(res).to.have.status(200);
           expect(res.body.message).to.eql('successfully deleted');
           done();
-        })
-     })
+        });
+    });
+  });
+});
+
+describe('unit tests for auth', () => {
+  it('should auth a user', () => {
+    let baseString = new Buffer('vic:password').toString('base64');
+    let authString = 'Basic ' + baseString;
+    let req = {headers:{authorization: authString}};
+    basic(req, {}, () => {
+      expect(req.auth).to.eql({username: 'vic', password: 'password'});
+    });
+  });
+});
+
+describe('signin tests', () => {
+  after((done)=> {
+    process.env.MONGODB_URI = dbPort;
+    mongoose.connection.db.dropDatabase(() => {
+      done();
+    });
+  });
+  it('should have a token', (done) => {
+    request('localhost:3000')
+    .post('/signup')
+    .send({username:'vic', password:'vic'})
+    .end((err,res) => {
+      expect(err).to.eql(null);
+      expect(res.body).to.have.property('token');
+      done();
+    });
+  });
+});
+
+describe('catch error test', () => {
+  it('should give an error for unsupported routes', (done) => {
+    request('localhost:3000')
+    .get('/*')
+    .end((err, res) => {
+      expect(err).to.not.eql(null);
+      expect(res).to.have.status(404);
+      expect(res.body).to.eql({message: 'not found'});
+      done();
+    });
   });
 });

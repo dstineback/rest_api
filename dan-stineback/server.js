@@ -4,23 +4,28 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const morgan = require('morgan');
-const errorHandler = require(__dirname + '/lib/error_handling');
+const cors = require('cors');
 
-const dbPort = process.env.MONGOLAB_URI || 'mongodb://localhost/dev_db';
-mongoose.connect('mongodb://localhost/dev_db');
+
+const dbPort = process.env.MONGODB_URI || 'mongodb://localhost/dev_db';
+mongoose.connect(dbPort);
 
 const dogRouter = require(__dirname + '/routes/dog-route');
 const catRouter = require(__dirname + '/routes/cat-route');
-const ageRouter = require(__dirname + '/routes/age');
+// const authRouter = require(__dirname + '/routes/router');
 
+app.use(cors());
 app.use(morgan('dev'));
 app.use('/dogs', dogRouter);
 app.use('/cats', catRouter);
-app.use('/age', ageRouter);
+// app.use('/', authRouter);
 
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+  res.status(500).json({message: err.message});
+  next(err);
+});
 
 app.use((req, res)=> {
-  res.status(404).json({msg: 'page not found test'});
+  res.status(404).json({message: 'not found'});
 });
 app.listen(3000, () => console.log('server is up on 3000'));
